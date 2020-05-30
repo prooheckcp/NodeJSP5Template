@@ -1,79 +1,193 @@
 //UI elements\\
-let TestButton;
-let Test2Button;
+let SiegeCatapultAttackButton;
+let SiegeSoldierAttackButton;
+let SiegeArcherAttackButton;
 let LogOffButton;
 //------------\\
 
-let UserInfo = { ip: '::ffff:127.0.0.1', name: 'xixi', password: '123' };
+//Variables\\
+
+let TimePassed = 0;
+
+let AttackCoolDown = 0;
+
+//Stored data of the siege info
+let SiegeInfo = {
+
+    siege_catapults: 0,
+    siege_soldiers: 0,
+    siege_archers: 0
+
+};
+
+//Stored data of the castle info
+let CastleInfo = {
+
+    castle_population: 0,
+    castle_soldiers: 0,
+    castle_strength: 0
+
+};
+
+//----------\\
+
+let UserInfo;
 
 function setup(){
 
-    createCanvas(700, 700);
+    //Reset the timer
+    TimePassed = 0;
+    
 
-    //Get the user
-    if(typeof(UserInfo) != typeof({})){
-        httpGet('/getUserInfo', data=>{
-            
-            if(data == 'error'){
-                window.location.replace('/login');
-            }else{
-                UserInfo = data;
-                print(UserInfo)
-            }
+    //Setting the canvas size
+    createCanvas(650, 700);
 
-        });
-    };
+    CheckIfUserOnline();
 
     //SetUp The UI elements\\
-    TestButton = new button(10, 20, 50, 50);
-    Test2Button = new circleButton(100, 100, 90);
+    SiegeCatapultAttackButton = new button(53.5, 600, 125, 75);
+    SiegeSoldierAttackButton = new button(271.5, 600, 125, 75);
+    SiegeArcherAttackButton = new button(471.5, 600, 125, 75);
     LogOffButton = new button(0, 0, 120, 50);
+    //----------------------\\
+
+    //Every 5 minutes add troops
+    setInterval(function(){ 
+
+        //Calculate the amount of troops that will be given to the castle and siege
+        let CalculateAmountCastleSoldiers = int(random(5, 15));
+        let CalculateAmountSiegeCatapults = int(random(1, 2));
+        let CalculateAmountSiegeSoldiers = int(random(5, 10));
+        let CalculateAmountSiegeArchers = int(random(1, 2));
+
+        httpPost('/addTroops', {info: UserInfo, castleSoldiers: CalculateAmountCastleSoldiers, siegeCatapults : CalculateAmountSiegeCatapults, siegeSoldiers : CalculateAmountSiegeSoldiers, siegeArchers: CalculateAmountSiegeArchers}, data =>{
+            SetTheUserData();
+        });
+
+    }, 
+        300 * 1000);
+
 };
 
 function draw(){
 
-    
+    //Count time
+    TimePassed += deltaTime/1000;
 
+    //Decrease the cooldown
+    if(AttackCoolDown > 0){
+        AttackCoolDown -= deltaTime/1000;
+    }else if(AttackCoolDown < 0){
+        AttackCoolDown = 0;
+    }
+
+    //Reset the canvas and set the background color
     background(180);
 
-    textSize(30);
-    BetterText('uwu', 200, 50);
+    
+    //Draw the header with the info about the current online player
+    DrawProjectHeader();
 
-    TestButton.hovered(()=>{
-        fill(200);
-    });
-    TestButton.draw();
-    fill(255);
+    //Draw the castle
+    DrawTheCastle();
 
-    Test2Button.hovered(()=>{
-        fill(200);
-    });
-    Test2Button.draw();
-    fill(255);
+    //Draw the siege
+    DrawTheSiege();
 
-    //LogOutButton
-    fill(227, 0, 0);
-    LogOffButton.hovered(()=>{
-        fill(176, 0, 0);
-    });
+    //Draw victory Screen
+    DrawVictoryScreen();
 
-    LogOffButton.draw();
-
-    textSize(20);
-    textAlign(CENTER, CENTER);
-    BetterText('Log Out', LogOffButton.x + LogOffButton.w/2, LogOffButton.y + LogOffButton.h/2);
-    fill(255);
+    //Draw the log out button
+    DrawLogOutButton();
 
 };
 
 function mousePressed(){
 
-    TestButton.click(()=>{print('uwu')});
-    Test2Button.click(()=>{print('owo')});
+    //Log u off from the project
     LogOffButton.click(()=>{
         httpPost('/logoff', UserInfo,(data) =>{
             window.location.replace('/login');
         });
     });
+
+    //Only the log out butotn will work if the castle is dead
+    if(CastleInfo.castle_strength <= 0){
+        return;
+    }
+
+    //When u press the catapult attack button
+    SiegeCatapultAttackButton.click(()=>{
+       
+        if(AttackCoolDown > 0){
+            return;
+        }
+
+        let CalculateAmount = int(random(1, 5));
+
+        if(SiegeInfo.siege_catapults > 0){
+
+            httpPost('/catapultAttack', {info: UserInfo, amount: CalculateAmount}, data =>{
+
+                SetTheUserData();
+                AttackCoolDown = 5;
+
+
+            });
+            
+        }else{
+            alert('You do not have enough catapults');
+        };
+
+    });
+
+    //When u press the soldier attack button
+    SiegeSoldierAttackButton.click(()=>{
+        
+        if(AttackCoolDown > 0){
+            return;
+        }
+
+        let CalculateAmount = int(random(1, 10));
+
+        if(SiegeInfo.siege_soldiers > 4){
+
+            httpPost('/soldiersAttack', {info: UserInfo, amount: CalculateAmount}, data =>{
+
+                SetTheUserData();
+                AttackCoolDown = 5;
+
+            });
+            
+        }else{
+            alert('You do not have enough soldiers');
+        };
+
+    });
+
+    //When you press the archer attack button
+    SiegeArcherAttackButton.click(()=>{
+     
+        if(AttackCoolDown > 0){
+            return;
+        }
+
+        let CalculateAmount = int(random(10, 35));
+
+        if(SiegeInfo.siege_archers > 4){
+
+            httpPost('/archersAttack', {info: UserInfo, amount: CalculateAmount}, data =>{
+
+                SetTheUserData();
+                AttackCoolDown = 5;
+
+            });
+            
+        }else{
+            alert('You do not have enough archers');
+        };
+
+    });
+
 
 };

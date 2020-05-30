@@ -2,7 +2,6 @@ const express = require('express');
 const app = express();
 const path = require('path');
 const bodyparser = require('body-parser');
-const expressip = require('express-ip');
 const port = 3000;
 
 //Import routers\\
@@ -14,7 +13,6 @@ const posts = require(path.join(__dirname, 'routes', 'post'));
 //Middleware\\
 app.use(bodyparser.json());
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(expressip().getIpInfoMiddleware);
 //-----------\\
 
 //Page gets and responses\\
@@ -26,7 +24,7 @@ app.use(posts);
 //The 404 error
 app.use((req, res, next) => {
 
-    res.send('404 Error');
+    res.redirect('/game');
 
 });
 //------------------------\\

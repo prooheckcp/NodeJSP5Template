@@ -9,7 +9,7 @@ const UsersData = require(path.join(__dirname, '..', 'util', 'currentUsers'));
 router.get('/login', (req, res, next)=>{
 
     let UsersArray = UsersData.array();
-    let ip = req.ipInfo.ip;  
+    let ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
 
     let Debounce = false;
@@ -35,7 +35,7 @@ router.get('/login', (req, res, next)=>{
 router.get('/signup', (req, res, next)=>{
 
     let UsersArray = UsersData.array();
-    let ip = req.ipInfo.ip;  
+    let ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
 
     let Debounce = false;
@@ -66,7 +66,7 @@ router.get('/game', (req, res, next)=>{
 router.get('/getUserInfo', (req, res, next)=>{
 
     let UsersArray = UsersData.array();
-    let ip = req.ipInfo.ip;  
+    let ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
     let Debounce = false;
     let InfoToBeSent;
@@ -88,5 +88,7 @@ router.get('/getUserInfo', (req, res, next)=>{
     }
 
 });
+
+
 
 module.exports = router;
